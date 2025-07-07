@@ -7,40 +7,27 @@ import time
 from bs4 import BeautifulSoup
 
 def is_threads_url(url):
-    """Check if the URL belongs to Threads"""
-    try:
-        parsed = urlparse(url)
-        threads_domains = [
-            'threads.com',
-            'www.threads.com'
-        ]
-        return parsed.netloc.lower() in threads_domains
-    except Exception:
+    """
+    Check if the URL is a Threads URL
+    """
+    if 'threads.com' in url:
+        return True
+    else:
         return False
 
-def parse_threads(url):
+def process_threads(url):
     """
     Parse a Threads post URL and extract user, date, and content information.
-    
-    Args:
-        url (str): The Threads post URL to parse
-        
-    Returns:
-        dict: Dictionary containing user, date, and content information
     """
     if not url:
         print("URL not provided.")
-        return {
-            'user': None,
-            'date': None,
-            'content': None
-        }
+        return None
     
-    # Configure Chrome options for headless browsing
+    # Configure Chrome options
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run browser in background
-    chrome_options.add_argument("--no-sandbox")  # Bypass OS security model
-    chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     
     # Initialize Chrome service
     service = Service()
@@ -49,7 +36,7 @@ def parse_threads(url):
     try:
         # Navigate to the Threads URL
         driver.get(url)
-        time.sleep(3)  # Wait for page to load
+        time.sleep(3)
         
         # Find the main post container using XPath with specific CSS classes
         div_elements = driver.find_elements(By.XPATH,
@@ -83,49 +70,17 @@ def parse_threads(url):
             return {
                 'user': user,
                 'date': date,
-                'content': content
+                'content': content,
+                'url': url
             }
         
         else:
             print("No element found with the specified selector.")
-            return {
-                'user': None,
-                'date': None,
-                'content': None
-            }
+            return None
     
     except Exception as e:
         print(f"Error occurred: {e}")
-        return {
-            'user': None,
-            'date': None,
-            'content': None
-        }
+        return None
     
     finally:
-        # Always close the browser driver to free up resources
         driver.quit()
-
-def main():
-    """Main function to test the Threads parser."""
-    
-    # Example usage
-    print("🧵 Threads Post Parser")
-    print("=" * 25)
-    
-    # Test URL (replace with actual Threads URL)
-    test_url = "https://www.threads.net/@username/post/example"
-    
-    if is_threads_url(test_url):
-        print(f"Valid Threads URL: {test_url}")
-        result = parse_threads(test_url)
-        
-        print("\nParsed Results:")
-        print(f"User: {result['user']}")
-        print(f"Date: {result['date']}")
-        print(f"Content: {result['content']}")
-    else:
-        print(f"Invalid Threads URL: {test_url}")
-
-if __name__ == "__main__":
-    main()
