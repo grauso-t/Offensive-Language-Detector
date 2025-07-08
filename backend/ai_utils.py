@@ -1,9 +1,13 @@
 from transformers import pipeline
 from googletrans import Translator
 import langdetect
+import joblib
 
 # Tranlator
 translator = Translator()
+
+# Model import
+model = joblib.load('dataset/logistic_regression_model.pkl')
 
 # Toxicity Classification
 classifier = pipeline("text-classification", model="unitary/toxic-bert")
@@ -47,3 +51,21 @@ def is_offensive(text):
         return False
     else:
         return None
+    
+def classify_text(text):
+    """
+    Classify the provided text using the toxicity classifier.
+    """
+    translation = translate_to_english(text)
+
+    if translation is None:
+        return None
+    
+    if model.predict([translation])[0] == 0:
+        return "homophobia"
+    elif model.predict([translation])[0] == 1:
+        return "sexism"
+    elif model.predict([translation])[0] == 2:
+        return "recism"
+    else:
+        return "not classified"

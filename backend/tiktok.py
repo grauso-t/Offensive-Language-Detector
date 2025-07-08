@@ -1,6 +1,7 @@
 import yt_dlp
 import os
 import audio_utils
+import datetime
 
 def is_tiktok_url(url):
     """
@@ -65,7 +66,9 @@ def process_tiktok(url):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
                 user = info.get('uploader', 'Unknown') or info.get('uploader_id', 'Unknown')
-                date = info.get('upload_date', 'Unknown')
+                raw_date = info.get('upload_date', 'Unknown')
+                parsed_date = datetime.strptime(raw_date, '%Y%m%d')
+                date = parsed_date.strftime('%Y-%m-%d')
                 file_path = os.path.join("temp", f"{info['id']}.mp3")
                 content = audio_utils.get_audio_content(file_path)
                 os.remove(file_path)

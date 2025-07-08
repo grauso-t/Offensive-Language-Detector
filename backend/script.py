@@ -29,7 +29,7 @@ print(f"  URL    : {text['url']}")
 
 if text["content"] is not None:
     if ai_utils.is_offensive(text["content"]):
-        print("\nThe content is offensive.")
+        print(ai_utils.classify_text(text["content"]))
     else:
         print("\nThe content is not offensive.")
 else:
