@@ -1,8 +1,36 @@
 import pandas as pd
 import os
+import re
+import emoji
+import unicodedata
 
-# Define base path
+# Define base path for dataset folders
 base_path = 'dataset'
+
+# Function to clean the text: remove mentions, emojis, weird characters, and extra spaces
+def clean_text(text):
+    if pd.isnull(text):
+        return ""
+    
+    # Remove mentions like @user
+    text = re.sub(r"@\w+", "", text)
+
+    # Remove links
+    text = re.sub(r"http\S+|www.\S+", "", text)
+
+    # Remove emojis
+    text = emoji.replace_emoji(text, replace='')
+
+    # Remove non-ASCII characters (e.g. Arabic, symbols)
+    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8', 'ignore')
+
+    # Remove special characters, keeping basic punctuation
+    text = re.sub(r"[^a-zA-Z0-9\s.,!?'\"]+", "", text)
+
+    # Collapse multiple spaces/newlines into one space
+    text = re.sub(r"\s+", " ", text).strip()
+
+    return text
 
 # Load Homophobia dataset
 homophobia_path = os.path.join(base_path, 'archive_homophobia', 'homophobiaDatasetAnonymous.csv')
@@ -26,37 +54,34 @@ sexism_df = sexism_df.dropna(subset=["label"])
 sexism_df = sexism_df[["label", "text"]]
 sexism_df["category"] = "sexism"
 
-# Merge all three datasets into a single dataframe
+# Merge all datasets
 df = pd.concat([homophobia_df, racism_df, sexism_df], ignore_index=True)
 
-# Clean up by removing rows with missing text or labels
+# Remove rows with missing or duplicate text
 df = df.dropna(subset=["text", "label"])
-# Remove duplicate texts to avoid repetition
 df = df.drop_duplicates(subset=["text"])
-# Make sure the labels are integers
 df["label"] = df["label"].astype(int)
 
-# Balance the dataset so that each combination of category and label (0 or 1) has the same number of examples
+# Find the smallest group size across all (category, label) combinations
 group_counts = df.groupby(["category", "label"]).size()
-# Check the smallest group size among all category-label groups
 min_per_group = group_counts.min()
-
 print("Minimo comune per ciascun gruppo (categoria + label):", min_per_group)
 
-# For each group, we randomly sample exactly that number of examples
-
+# Balance the dataset by sampling equally from all (category, label) groups
 balanced_df = (
     df.groupby(["category", "label"], group_keys=False)
     .apply(lambda x: x.sample(min_per_group, random_state=42))
     .reset_index(drop=True)
 )
 
-# Save the balanced combined dataset to a CSV file
+# Clean text column using the cleaning function
+balanced_df["text"] = balanced_df["text"].apply(clean_text)
+
+# Save the cleaned and balanced dataset
 output_path = os.path.join(base_path, 'merged_fully_balanced.csv')
 balanced_df.to_csv(output_path, index=False)
 
 # Print some simple stats to verify the balance
-
 print(f"\nDataset unificato e bilanciato salvato in: {output_path}\n")
 
 print("Distribuzione per categoria:")
