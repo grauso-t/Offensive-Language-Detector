@@ -7,7 +7,7 @@ import joblib
 translator = Translator()
 
 # Model import
-model = joblib.load('dataset/logistic_regression_model.pkl')
+model = joblib.load('dataset/logistic_regression_results/logistic_regression_model.pkl')
 
 # Toxicity Classification
 classifier = pipeline("text-classification", model="unitary/toxic-bert")
@@ -66,6 +66,6 @@ def classify_text(text):
     elif model.predict([translation])[0] == 1:
         return "sexism"
     elif model.predict([translation])[0] == 2:
-        return "recism"
+        return "racism"
     else:
         return "not classified"

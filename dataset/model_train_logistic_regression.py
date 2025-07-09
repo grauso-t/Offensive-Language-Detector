@@ -32,7 +32,7 @@ model = Pipeline([
 # Fit the model
 model.fit(X_train, y_train)
 
-def evaluate_model(model, X_test, y_test, output_dir="dataset"):
+def evaluate_model(model, X_test, y_test, output_dir="dataset/logistic_regression_results"):
     """
     Function to evaluate the model using different metrics.
     """
@@ -93,11 +93,11 @@ def evaluate_model(model, X_test, y_test, output_dir="dataset"):
     cm_path = os.path.join(output_dir, "confusion_matrix.png")
     plt.savefig(cm_path)
     plt.close()
-    print(f"Matrice di confusione salvata in: {cm_path}")
-    print(f"Metriche salvate in: {os.path.join(output_dir, 'model_metrics.json')}")
+    print(f"Confusion matrix saved to: {cm_path}")
+    print(f"Metrics saved to: {os.path.join(output_dir, 'model_metrics.json')}")
 
 # Evaluate model
 evaluate_model(model, X_test, y_test)
 
 # Save model
-joblib.dump(model, 'dataset/logistic_regression_model.pkl')
+joblib.dump(model, 'dataset/logistic_regression_results/logistic_regression_model.pkl')
