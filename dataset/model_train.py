@@ -24,8 +24,6 @@ df = pd.read_csv("dataset/cleaned_balanced_dataset.csv")
 X_train, X_test, y_train, y_test = train_test_split(df["text"], df["category"], test_size=0.2, random_state=42)
 
 # Create a pipeline with TF-IDF vectorization and logistic regression
-from sklearn.pipeline import Pipeline
-
 model = Pipeline([
     ('tfidf', TfidfVectorizer(stop_words='english', max_features=5000)),
     ('clf', LogisticRegression(max_iter=1000))
@@ -35,6 +33,9 @@ model = Pipeline([
 model.fit(X_train, y_train)
 
 def evaluate_model(model, X_test, y_test, output_dir="dataset"):
+    """
+    Function to evaluate the model using different metrics.
+    """
     y_pred = model.predict(X_test)
 
     # Calculate metrics
@@ -45,6 +46,9 @@ def evaluate_model(model, X_test, y_test, output_dir="dataset"):
     precision_weighted = precision_score(y_test, y_pred, average='weighted')
     recall_weighted = recall_score(y_test, y_pred, average='weighted')
     f1_weighted = f1_score(y_test, y_pred, average='weighted')
+
+    # Classification report as dict
+    report_dict = classification_report(y_test, y_pred, output_dict=True)
 
     # Print metrics
     print("== Classification Report ==")
@@ -58,7 +62,7 @@ def evaluate_model(model, X_test, y_test, output_dir="dataset"):
     print(f"Recall (weighted): {recall_weighted:.4f}")
     print(f"F1-score (weighted): {f1_weighted:.4f}")
 
-    # Save metrics
+    # Save metrics and classification report
     results = {
         "accuracy": accuracy,
         "precision_macro": precision_macro,
@@ -66,7 +70,8 @@ def evaluate_model(model, X_test, y_test, output_dir="dataset"):
         "f1_macro": f1_macro,
         "precision_weighted": precision_weighted,
         "recall_weighted": recall_weighted,
-        "f1_weighted": f1_weighted
+        "f1_weighted": f1_weighted,
+        "classification_report": report_dict
     }
 
     os.makedirs(output_dir, exist_ok=True)
