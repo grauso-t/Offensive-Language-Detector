@@ -7,7 +7,8 @@ import joblib
 translator = Translator()
 
 # Model import
-model = joblib.load('dataset/logistic_regression_results/logistic_regression_model.pkl')
+# model = joblib.load('dataset/logistic_regression_results/logistic_regression_model.pkl')
+model = joblib.load('dataset/svm_cross_validation_results/svm_model.pkl')
 
 # Toxicity Classification
 classifier = pipeline("text-classification", model="unitary/toxic-bert")
@@ -39,7 +40,7 @@ def is_offensive(text):
     """
     translation = translate_to_english(text)
 
-    if text is not None:
+    if translation is not None:
         result = classifier(translation)
 
         offensive_labels = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
@@ -58,7 +59,7 @@ def classify_text(text):
     """
     translation = translate_to_english(text)
 
-    if translation is None:
+    if text is None:
         return None
     
     if model.predict([translation])[0] == 0:
