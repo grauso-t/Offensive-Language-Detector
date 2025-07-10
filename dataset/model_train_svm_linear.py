@@ -158,3 +158,78 @@ print(f"Overfitting plot saved to: {overfit_path}")
 
 # SHAP
 generate_shap_plots(best_model, X_test, output_dir)
+
+from sklearn.decomposition import PCA
+
+def plot_pca_2d(model, X, y, output_dir, model_name):
+    """
+    Plot 2D PCA projection of TF-IDF features from the given pipeline model.
+
+    Args:
+        model: Trained sklearn pipeline with 'tfidf' step.
+        X: Input raw texts (pandas Series or list).
+        y: Numeric class labels corresponding to X.
+        output_dir: Directory to save the plot.
+        model_name: String name of the model (for title and filename).
+    """
+    from sklearn.decomposition import PCA
+
+    tfidf = model.named_steps['tfidf']
+    X_tfidf = tfidf.transform(X)
+    X_dense = X_tfidf.toarray() if hasattr(X_tfidf, "toarray") else X_tfidf
+
+    print(f"Number of samples: {len(y)}")
+    print(f"TF-IDF dense shape: {X_dense.shape}")
+
+    pca = PCA(n_components=2, random_state=42)
+    X_pca = pca.fit_transform(X_dense)
+    print("Explained variance ratio by PCA components:", pca.explained_variance_ratio_)
+
+    label_map = {0: "Omofobia", 1: "Sessismo", 2: "Razzismo"}
+
+    # Filter valid labels and map to names
+    mask = y.isin(label_map.keys())
+    if mask.sum() == 0:
+        print("ERROR: No valid labels found after mapping. Cannot plot PCA.")
+        return
+
+    X_pca_filtered = X_pca[mask.values]
+    y_filtered = y[mask].map(label_map)
+
+    # Define colors explicitly per class (must be in same order as labels)
+    class_labels = sorted(label_map.values())  # e.g. ["Omofobia", "Razzismo", "Sessismo"]
+    # Map class labels to colors manually
+    colors_map = {
+        "Omofobia": "#E41A1C",  # red
+        "Sessismo": "#377EB8",  # blue
+        "Razzismo": "#4DAF4A"   # green
+    }
+
+    plt.figure(figsize=(8, 6))
+
+    # Plot each class separately for correct color and label
+    for class_label in class_labels:
+        indices = y_filtered == class_label
+        plt.scatter(
+            X_pca_filtered[indices, 0],
+            X_pca_filtered[indices, 1],
+            c=colors_map[class_label],
+            label=class_label,
+            alpha=0.7,
+            s=60
+        )
+
+    plt.title(f"PCA 2D Projection of TF-IDF Space ({model_name})")
+    plt.xlabel("Principal Component 1")
+    plt.ylabel("Principal Component 2")
+    plt.legend(title="Classe", loc='best')
+    plt.tight_layout()
+
+    os.makedirs(output_dir, exist_ok=True)
+    plot_path = os.path.join(output_dir, f"pca_2d_{model_name.lower().replace(' ', '_')}.png")
+    plt.savefig(plot_path)
+    plt.close()
+
+    print(f"PCA 2D plot saved at: {plot_path}")
+
+plot_pca_2d(best_model, X_test, y_test, output_dir, model_name="SVM Linear")

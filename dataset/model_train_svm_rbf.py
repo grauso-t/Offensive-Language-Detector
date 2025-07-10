@@ -20,6 +20,7 @@ from scipy.sparse import lil_matrix
 import numpy as np
 from sklearn.metrics import f1_score
 from tqdm import tqdm
+from sklearn.decomposition import PCA
 
 # Output directory for all results
 output_dir = "dataset/svm_rbf_results"
@@ -219,3 +220,56 @@ def analyze_permutation_importance_by_class(model, X_test, y_test, output_dir):
         print(f"[{class_name}] Permutation plot saved to: {plot_path}")
 
 analyze_permutation_importance_by_class(best_model, X_test, y_test, output_dir=output_dir)
+
+def plot_pca_2d(model, X, y, output_dir, model_name):
+    """
+    Plot 2D PCA projection of TF-IDF features from the given pipeline model,
+    using only matplotlib (no seaborn).
+    """
+    # Extract TF-IDF transformer from pipeline
+    tfidf = model.named_steps['tfidf']
+    # Transform raw texts to TF-IDF vectors
+    X_tfidf = tfidf.transform(X)
+
+    # Convert sparse matrix to dense for PCA
+    X_dense = X_tfidf.toarray() if hasattr(X_tfidf, "toarray") else X_tfidf
+
+    # Fit PCA to reduce to 2D
+    pca = PCA(n_components=2, random_state=42)
+    X_pca = pca.fit_transform(X_dense)
+
+    # Map numeric labels to meaningful names and colors
+    label_map = {0: "Omofobia", 1: "Sessismo", 2: "Razzismo"}
+    color_map = {0: 'red', 1: 'green', 2: 'blue'}
+
+    plt.figure(figsize=(8, 6))
+
+    # Plot each class separately for legend and colors
+    for label in np.unique(y):
+        indices = (y == label)
+        plt.scatter(
+            X_pca[indices, 0],
+            X_pca[indices, 1],
+            c=color_map[label],
+            label=label_map[label],
+            alpha=0.7,
+            s=60,
+            edgecolors='w',
+            linewidth=0.5
+        )
+
+    plt.title(f"PCA 2D Projection of TF-IDF Space ({model_name})")
+    plt.xlabel("Principal Component 1")
+    plt.ylabel("Principal Component 2")
+    plt.legend(title="Classe", loc='best')
+    plt.tight_layout()
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+    plot_path = os.path.join(output_dir, f"pca_2d_{model_name.lower().replace(' ', '_')}.png")
+    plt.savefig(plot_path)
+    plt.close()
+
+    print(f"PCA 2D plot saved at: {plot_path}")
+
+plot_pca_2d(best_model, X_test, y_test.values, output_dir="dataset/svm_rbf_results", model_name="SVM RBF")
