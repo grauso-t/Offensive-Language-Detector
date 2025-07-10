@@ -16,9 +16,13 @@ import matplotlib.pyplot as plt
 import joblib
 import json
 import os
+from scipy.sparse import lil_matrix
+import numpy as np
+from sklearn.metrics import f1_score
+from tqdm import tqdm
 
 # Output directory for all results
-output_dir = "dataset/svm_cross_validation_results"
+output_dir = "dataset/svm_rbf_results"
 
 # Load dataset
 df = pd.read_csv("dataset/cleaned_balanced_dataset.csv")
@@ -103,7 +107,7 @@ def evaluate_model(model, X_test, y_test, output_dir):
         "classification_report": report_dict
     }
 
-    with open(os.path.join(output_dir, "svm_model_metrics.json"), "w") as f:
+    with open(os.path.join(output_dir, "svm_rbf_model_metrics.json"), "w") as f:
         json.dump(results, f, indent=4)
 
     # Custom class labels
@@ -117,18 +121,18 @@ def evaluate_model(model, X_test, y_test, output_dir):
     plt.title("Confusion Matrix")
     plt.tight_layout()
 
-    cm_path = os.path.join(output_dir, "svm_confusion_matrix.png")
+    cm_path = os.path.join(output_dir, "svm_rbf_confusion_matrix.png")
     plt.savefig(cm_path)
     plt.close()
 
     print(f"Confusion matrix saved to: {cm_path}")
-    print(f"Metrics saved to: {os.path.join(output_dir, 'svm_model_metrics.json')}")
+    print(f"Metrics saved to: {os.path.join(output_dir, 'svm_rbf_model_metrics.json')}")
 
 # Evaluate model
 evaluate_model(best_model, X_test, y_test, output_dir=output_dir)
 
 # Save the best model
-model_path = os.path.join(output_dir, "svm_model.pkl")
+model_path = os.path.join(output_dir, "svm_rbf_model.pkl")
 joblib.dump(best_model, model_path)
 print(f"Model saved to: {model_path}")
 
@@ -149,3 +153,69 @@ plt.savefig(overfit_path)
 plt.close()
 
 print(f"Overfitting plot saved to: {overfit_path}")
+
+def analyze_permutation_importance_by_class(model, X_test, y_test, output_dir):
+    """
+    Computes permutation importance separately for each class (Homophobia, Sexism, Racism)
+    and plots the top features.
+    """
+
+    print("\n== Class-wise Permutation Feature Importance ==")
+
+    feature_names = model.named_steps['tfidf'].get_feature_names_out()
+    X_test_vect = model.named_steps['tfidf'].transform(X_test)
+    classifier = model.named_steps['svc']
+
+    # Get original predictions
+    original_preds = classifier.predict(X_test_vect)
+    base_scores = f1_score(y_test, original_preds, average=None)
+
+    class_labels = ["Omofobia", "Sessismo", "Razzismo"]
+    num_classes = len(class_labels)
+    top_k = 15
+
+    # Initialize importances matrix
+    class_importances = np.zeros((num_classes, X_test_vect.shape[1]))
+
+    print("Computing permutation importance... (this may take a bit)")
+    rng = np.random.RandomState(42)
+
+    for feature_idx in tqdm(range(X_test_vect.shape[1]), desc="Permutation Importance"):
+        # Copy test features
+        X_permuted = lil_matrix(X_test_vect)
+
+        # Permute one feature across all samples
+        column = X_permuted[:, feature_idx].toarray().flatten()
+        rng.shuffle(column)
+        X_permuted[:, feature_idx] = column.reshape(-1, 1)
+
+        # Get predictions with permuted data
+        permuted_preds = classifier.predict(X_permuted)
+
+        # Calculate class-wise F1
+        permuted_scores = f1_score(y_test, permuted_preds, average=None)
+
+        # Importance = drop in performance
+        score_diff = base_scores - permuted_scores
+        class_importances[:, feature_idx] = score_diff
+
+    # Plot top features for each class
+    for class_idx, class_name in enumerate(class_labels):
+        sorted_idx = np.argsort(class_importances[class_idx])[::-1][:top_k]
+        top_features = [feature_names[i] for i in sorted_idx]
+        importances = class_importances[class_idx][sorted_idx]
+
+        plt.figure(figsize=(10, 6))
+        plt.barh(range(top_k), importances[::-1], align='center')
+        plt.yticks(range(top_k), top_features[::-1])
+        plt.xlabel("F1-score Drop (Permutation Importance)")
+        plt.title(f"Top {top_k} Important Words for Class: {class_name}")
+        plt.tight_layout()
+
+        plot_path = os.path.join(output_dir, f"permutation_importance_{class_name.lower()}.png")
+        plt.savefig(plot_path)
+        plt.close()
+
+        print(f"[{class_name}] Permutation plot saved to: {plot_path}")
+
+analyze_permutation_importance_by_class(best_model, X_test, y_test, output_dir=output_dir)
