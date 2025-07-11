@@ -2,8 +2,6 @@ import pandas as pd
 import html
 import re
 
-import pandas as pd
-
 def undersample_to_minority(df, label_col='category'):
     """
     Function to undersample a DataFrame to balance the classes based on the minimum class size.
@@ -57,47 +55,44 @@ def clean_text(text):
 
 # Load datasets
 dataset_homophobia = pd.read_csv('dataset/archive_homophobia/homophobiaDatasetAnonymous.csv')
-dataset_homophobia_generated = pd.read_csv('dataset/archive_homophobia/GeneratedDataset.csv')
 dataset_sexism = pd.read_csv('dataset/archive_sexism/train (2).csv')
 dataset_racism = pd.read_csv('dataset/archive_racism/twitter_racism_parsed_dataset.csv')
+dataset_neutral = pd.read_csv('dataset/archive_neutral/dataset_neutral.csv')
 
 # Check the structure of the homophobia dataset
 df_homophobia = dataset_homophobia[['text', 'category']]
 df_homophobia = df_homophobia[df_homophobia['category'] == 1]
-df_homophobia['category'] = 0
 df_homophobia['text'] = df_homophobia['text'].apply(clean_text)
-
-df_homophobia_generated = dataset_homophobia_generated[['text', 'label']]
-df_homophobia_generated = df_homophobia_generated[df_homophobia_generated['label'] == 1]
-df_homophobia_generated = df_homophobia_generated.rename(columns={'label': 'category'})
-df_homophobia_generated['category'] = 0
-df_homophobia_generated['text'] = df_homophobia_generated['text'].apply(clean_text)
-
-df_homophobia_total = pd.concat([df_homophobia, df_homophobia_generated], ignore_index=True)
+df_homophobia['category'] = 0
 
 # Check the structure of the sexism dataset
 df_sexism = dataset_sexism[['text', 'label_sexist']]
 df_sexism = df_sexism[df_sexism['label_sexist'] == 'sexist']
 df_sexism = df_sexism.rename(columns={'label_sexist': 'category'})
-df_sexism['category'] = 1
 df_sexism['text'] = df_sexism['text'].apply(clean_text)
+df_sexism['category'] = 1
 
 # Check the structure of the racism dataset
 df_racism = dataset_racism[['Text', 'Annotation']]
 df_racism = df_racism[df_racism['Annotation'] == 'racism']
 df_racism = df_racism.rename(columns={'Text': 'text', 'Annotation': 'category'})
-df_racism['category'] = 2
 df_racism['text'] = df_racism['text'].apply(clean_text)
+df_racism['category'] = 2
 
-print(df_homophobia_total.head())
-print("Conteggio homophobia:", len(df_homophobia_total))
+# Check the structure of the neutral dataset
+df_neutral = dataset_neutral[['text', 'category']]
+df_neutral['text'] = df_neutral['text'].apply(clean_text)
+df_neutral['category'] = 3
+
+print(df_homophobia.head())
+print("Conteggio homophobia:", len(df_homophobia))
 print(df_sexism.head())
 print("Conteggio sexism:", len(df_sexism))
 print(df_racism.head())
 print("Conteggio racism:", len(df_racism))
 
 # Concatenate all datasets
-df = pd.concat([df_homophobia_total, df_sexism, df_racism], ignore_index=True)
+df = pd.concat([df_homophobia, df_sexism, df_racism, df_neutral], ignore_index=True)
 df_balanced = undersample_to_minority(df, label_col='category')
 print(df_balanced['category'].value_counts())
 df_balanced = df_balanced.sample(frac=1, random_state=42).reset_index(drop=True)

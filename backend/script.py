@@ -21,6 +21,10 @@ def process_url(url):
 url = input("Enter a TikTok or Threads URL: ").strip()
 text = process_url(url)
 
+if text is None:
+    print("No content found in the provided URL.")
+    exit()
+    
 print("Extracted content:")
 print(f"  User   : {text['user']}")
 print(f"  Date   : {text['date']}")
@@ -28,9 +32,7 @@ print(f"  Content: {text['content']}")
 print(f"  URL    : {text['url']}")
 
 if text["content"] is not None:
-    if ai_utils.is_offensive(text["content"]):
-        print(ai_utils.classify_text(text["content"]))
-    else:
-        print("\nThe content is not offensive.")
+    result = ai_utils.is_offensive_logistic_regression(text["content"])
+    print(f"Detected: {result}")
 else:
-    print("\nNo content found in the provided URL.")
+    print("No content to analyze for offensiveness.")

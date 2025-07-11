@@ -2,16 +2,63 @@ from transformers import pipeline
 from googletrans import Translator
 import langdetect
 import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer
+import re
+import html
+
+def clean_text(text):
+    """
+    Function to clean text by removing unnecessary characters,
+    such as repeated quotes, mentions, hashtags, and URLs,
+    while preserving potentially offensive words.
+    """
+    # Decode HTML entities (e.g., &amp; → &)
+    text = html.unescape(text)
+   
+    # Remove mentioned users (e.g., @username or [USER])
+    text = re.sub(r'(@\w+|\[USER\])', '', text)
+   
+    # Remove hashtags (e.g., #topic)
+    text = re.sub(r'#\w+', '', text)
+   
+    # Remove URLs
+    text = re.sub(r'http\S+|www\.\S+', '', text)
+   
+    # Remove non-ASCII characters (excluding common punctuation)
+    text = re.sub(r'[^\w\s,.!?\'"]+', '', text)
+   
+    # Reduce repeated characters (e.g., cooool → cool)
+    text = re.sub(r'(.)\1{2,}', r'\1\1', text)
+   
+    # Remove multiple spaces
+    text = re.sub(r'\s+', ' ', text)
+   
+    # Remove leading and trailing whitespace
+    text = text.strip()
+    
+    # Convert to lowercase
+    text = text.lower()
+   
+    # Remove all non-alphanumeric characters (except spaces)
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+   
+    # Normalize spaces again
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Final trim
+    text = text.strip()
+    
+    return text
 
 # Tranlator
 translator = Translator()
 
 # Model import
-# model = joblib.load('dataset/logistic_regression_results/logistic_regression_model.pkl')
-model = joblib.load('dataset/svm_cross_validation_results/svm_model.pkl')
+model = joblib.load('./models/logistic_regression/model.pkl')
+vectorizer = joblib.load('./models/logistic_regression/vectorizer.pkl')
 
-# Toxicity Classification
-classifier = pipeline("text-classification", model="unitary/toxic-bert")
+# Load a toxicity classification pipeline (RoBERTa-based model)
+classifier = pipeline("text-classification", model="unitary/toxic-bert", top_k=None)
 
 def translate_to_english(text):
     """
@@ -34,39 +81,31 @@ def translate_to_english(text):
     except Exception as e:
         return None
 
-def is_offensive(text):
+def is_offensive_logistic_regression(text):
     """
-    Check if the provided text is offensive by translating it to English
-    """
-    translation = translate_to_english(text)
-
-    if translation is not None:
-        result = classifier(translation)
-
-        offensive_labels = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
-        for item in result:
-            label = item['label'].lower()
-            score = item['score']
-            if label in offensive_labels and score > 0.5:
-                return True
-        return False
-    else:
-        return None
-    
-def classify_text(text):
-    """
-    Classify the provided text using the toxicity classifier.
+    Classify a sentence as positive, negative, or neutral.
+    If classified as negative, also assign a specific category.
     """
     translation = translate_to_english(text)
-
-    if text is None:
+    if translation is None:
         return None
     
-    if model.predict([translation])[0] == 0:
-        return "homophobia"
-    elif model.predict([translation])[0] == 1:
-        return "sexism"
-    elif model.predict([translation])[0] == 2:
-        return "racism"
-    else:
-        return "not classified"
+    cleaned = clean_text(translation)
+    
+    results = classifier(cleaned)[0]  # List of scores
+    
+    offensive_labels = {
+        "toxicity", "severe_toxicity", "obscene", "identity_attack",
+        "insult", "threat", "sexual_explicit"
+    }
+    
+    for item in results:
+        label = item['label'].lower()
+        score = item['score']
+        if label in offensive_labels and score > 0.3:
+            final = vectorizer.transform([cleaned])
+            prediction = model.predict(final)[0]
+            class_map = {0: "homophobia", 1: "sexism", 2: "racism"}
+            return class_map.get(prediction, "offensive content")
+    
+    return "no offensive content"
