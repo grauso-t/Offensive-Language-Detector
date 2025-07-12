@@ -23,3 +23,6 @@ venv/
 
 # macOS
 .DS_Store
+
+# modello bert
+models/bert_trainer/model.safetensors
