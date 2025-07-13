@@ -8,6 +8,8 @@ import html
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from transformers import BertTokenizer, BertForSequenceClassification
+import torch
 
 # Load environment variables (for OpenAI key)
 load_dotenv()
@@ -29,6 +31,14 @@ vectorizer_logistic_regression = joblib.load('models/logistic_regression/vectori
 linear_svm = joblib.load('models/linear_svm/model.pkl')
 vectorizer_linear_svm = joblib.load('models/linear_svm/vectorizer.pkl')
 
+# Load BERT model and tokenizer
+bert_model_path = "models/bert_trainer" 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Load model & tokenizer
+bert_tokenizer = BertTokenizer.from_pretrained(bert_model_path)
+bert_model = BertForSequenceClassification.from_pretrained(bert_model_path)
+bert_model.to(device)
+bert_model.eval()
 
 def clean_text(text):
     """
@@ -126,6 +136,40 @@ def is_offensive_svm(text):
             return class_map.get(prediction, "offensive content")
 
     return "no offensive content"
+
+def is_offensive_bert(text):
+    """
+    Use fine-tuned BERT model to classify text into:
+    'no offensive content', 'sexism', 'racism', or 'homophobia'.
+    """
+    # Translate to English if needed
+    translation = translate_to_english(text)
+    if translation is None:
+        return None
+
+    # Clean the text
+    cleaned = clean_text(translation)
+
+    # Tokenize the cleaned text
+    inputs = bert_tokenizer(cleaned, return_tensors="pt", padding=True, truncation=True, max_length=128)
+
+    # Move inputs to device
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+
+    # Run inference
+    with torch.no_grad():
+        outputs = bert_model(**inputs)
+        logits = outputs.logits
+        predicted_class_id = torch.argmax(logits, dim=-1).item()
+
+    # Map predicted class to label
+    class_map = {
+        0: "homophobia",
+        1: "sexism",
+        2: "racism",
+        3: "no offensive content"
+    }
+    return class_map.get(predicted_class_id, "offensive content")
 
 
 def is_offensive_gpt(text):

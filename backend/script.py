@@ -36,12 +36,14 @@ print(f"  URL    : {text['url']}")
 if text["content"]:
     logistic_regression = ai_utils.is_offensive_logistic_regression(text["content"])
     svm = ai_utils.is_offensive_svm(text["content"])
+    bert = ai_utils.is_offensive_bert(text["content"])
     gpt = ai_utils.is_offensive_gpt(text["content"])
 
     # Print model results
     print("\n--- Offensiveness Analysis ---")
     print(f"Logistic Regression: {logistic_regression}")
     print(f"SVM                : {svm}")
+    print(f"BERT               : {bert}")
     print(f"GPT-3.5            : {gpt}")
 
 else:
