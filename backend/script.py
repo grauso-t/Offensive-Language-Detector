@@ -1,7 +1,6 @@
 import tiktok
 import threads
 import ai_utils
-import json
 
 def process_url(url):
     """
@@ -18,21 +17,32 @@ def process_url(url):
     else:
         return 'Unsupported URL. We only support TikTok and Threads.'
 
+# Get user input
 url = input("Enter a TikTok or Threads URL: ").strip()
 text = process_url(url)
 
-if text is None:
+if text is None or isinstance(text, str):
     print("No content found in the provided URL.")
     exit()
-    
+
+# Display extracted metadata
 print("Extracted content:")
 print(f"  User   : {text['user']}")
 print(f"  Date   : {text['date']}")
 print(f"  Content: {text['content']}")
 print(f"  URL    : {text['url']}")
 
-if text["content"] is not None:
-    result = ai_utils.is_offensive_logistic_regression(text["content"])
-    print(f"Detected: {result}")
+# Analyze content
+if text["content"]:
+    logistic_regression = ai_utils.is_offensive_logistic_regression(text["content"])
+    svm = ai_utils.is_offensive_svm(text["content"])
+    gpt = ai_utils.is_offensive_gpt(text["content"])
+
+    # Print model results
+    print("\n--- Offensiveness Analysis ---")
+    print(f"Logistic Regression: {logistic_regression}")
+    print(f"SVM                : {svm}")
+    print(f"GPT-3.5            : {gpt}")
+
 else:
-    print("No content to analyze for offensiveness.")
+    print("No content to analyze.")
