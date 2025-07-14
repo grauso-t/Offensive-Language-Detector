@@ -5,9 +5,14 @@ import json
 import time
 from sklearn.metrics import accuracy_score, classification_report
 from openai import OpenAI
+from dotenv import load_dotenv
 
-# initialize OpenAI client with custom base URL
-client = OpenAI(api_key="g4a-dNBfm3lK4ZHABQmGOmLxNVbMBeBvIp5DZzV", base_url="https://api.gpt4-all.xyz/v1")
+# Load environment variables
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+
+# Initialize OpenAI client
+client = OpenAI(api_key=api_key, base_url="https://api.gpt4-all.xyz/v1")
 
 # load the dataset
 df = pd.read_csv("dataset/cleaned_balanced_dataset.csv")
