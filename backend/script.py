@@ -38,6 +38,7 @@ if text["content"]:
     svm = ai_utils.is_offensive_svm(text["content"])
     bert = ai_utils.is_offensive_bert(text["content"])
     gpt = ai_utils.is_offensive_gpt(text["content"])
+    llm = ai_utils.is_offensive_llm(text["content"])
 
     # Print model results
     print("\n--- Offensiveness Analysis ---")
@@ -45,6 +46,7 @@ if text["content"]:
     print(f"SVM                : {svm}")
     print(f"BERT               : {bert}")
     print(f"GPT-3.5            : {gpt}")
+    print(f"Mistral:           : {llm}")
 
 else:
     print("No content to analyze.")
