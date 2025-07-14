@@ -126,7 +126,7 @@ plt.xlabel("Predicted Label")
 plt.ylabel("True Label")
 plt.title("Confusion Matrix - GPT Classification")
 plt.tight_layout()
-plt.savefig("models/gpt/result/confusion_matrix.png")
+plt.savefig("models/llm/result/confusion_matrix.png")
 plt.close()
 
 print("Confusion matrix image saved to models/gpt/result/confusion_matrix.png")
