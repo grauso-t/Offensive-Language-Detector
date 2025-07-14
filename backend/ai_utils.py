@@ -8,10 +8,15 @@ import html
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from ctransformers import AutoModelForCausalLM
+import torch
 
-# Load environment variables (for OpenAI key)
+# Load environment variables
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
+
+device = 0 if torch.cuda.is_available() else -1
+gpu = 20 if device == 0 else 0
 
 # Initialize OpenAI client
 client = OpenAI(api_key=api_key, base_url="https://api.gpt4-all.xyz/v1")
@@ -20,15 +25,16 @@ client = OpenAI(api_key=api_key, base_url="https://api.gpt4-all.xyz/v1")
 translator = GoogleTranslator(source='auto', target='en')
 
 # Load HuggingFace toxicity classifier (based on RoBERTa)
-classifier = pipeline("text-classification", model="unitary/toxic-bert", top_k=None)
+classifier = pipeline("text-classification", model="unitary/toxic-bert", top_k=None, device=device)
 
+"""
 # Load pre-trained logistic regression and SVM models
 logistic_regression = joblib.load('models/logistic_regression/model.pkl')
 vectorizer_logistic_regression = joblib.load('models/logistic_regression/vectorizer.pkl')
 
 linear_svm = joblib.load('models/linear_svm/model.pkl')
 vectorizer_linear_svm = joblib.load('models/linear_svm/vectorizer.pkl')
-
+"""
 
 def clean_text(text):
     """
@@ -145,3 +151,32 @@ def is_offensive_gpt(text):
         temperature=0
     )
     return response.choices[0].message.content.strip()
+
+def is_offensive_llm(text):
+    """
+    Classifica il testo in: 'no offensive content', 'sexism', 'racism', o 'homophobia'
+    usando un modello LLaMA locale.
+    """
+
+    # Llama definition
+    llm = AutoModelForCausalLM.from_pretrained("TheBloke/Mistral-7B-v0.1-GGUF", model_file="mistral-7b-v0.1.Q4_K_M.gguf", model_type="mistral", gpu_layers=gpu)
+
+    # Prompt"
+    prompt = f"""[INST] <<SYS>>
+    You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
+    <</SYS>>
+
+    You are an offensive sentence classifier. 
+    Classify the following sentence into one of the following categories: 
+    'no offensive content', 'sexism', 'racism', or 'homophobia'. 
+
+    Respond with just one of these categories.
+
+    Sentence: {text}
+    Category:
+    [/INST]"""
+
+    output = llm(prompt)
+    return output
+
+print(is_offensive_llm("All women are sluts"))
