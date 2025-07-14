@@ -8,12 +8,9 @@ import html
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-<<<<<<< HEAD
-from ctransformers import AutoModelForCausalLM
-=======
 from transformers import BertTokenizer, BertForSequenceClassification
->>>>>>> e507d84279167cac75a5be866ebcf74afd3e9530
 import torch
+from ctransformers import AutoModelForCausalLM
 
 # Load environment variables
 load_dotenv()
@@ -31,16 +28,12 @@ translator = GoogleTranslator(source='auto', target='en')
 # Load HuggingFace toxicity classifier (based on RoBERTa)
 classifier = pipeline("text-classification", model="unitary/toxic-bert", top_k=None, device=device)
 
-"""
 # Load pre-trained logistic regression and SVM models
 logistic_regression = joblib.load('models/logistic_regression/model.pkl')
 vectorizer_logistic_regression = joblib.load('models/logistic_regression/vectorizer.pkl')
 
 linear_svm = joblib.load('models/linear_svm/model.pkl')
 vectorizer_linear_svm = joblib.load('models/linear_svm/vectorizer.pkl')
-<<<<<<< HEAD
-"""
-=======
 
 # Load BERT model and tokenizer
 bert_model_path = "models/bert_trainer" 
@@ -50,7 +43,6 @@ bert_tokenizer = BertTokenizer.from_pretrained(bert_model_path)
 bert_model = BertForSequenceClassification.from_pretrained(bert_model_path)
 bert_model.to(device)
 bert_model.eval()
->>>>>>> e507d84279167cac75a5be866ebcf74afd3e9530
 
 def clean_text(text):
     """
@@ -212,19 +204,15 @@ def is_offensive_llm(text):
     llm = AutoModelForCausalLM.from_pretrained("TheBloke/Mistral-7B-v0.1-GGUF", model_file="mistral-7b-v0.1.Q4_K_M.gguf", model_type="mistral", gpu_layers=gpu)
 
     # Prompt"
-    prompt = f"""[INST] <<SYS>>
-    You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
-    <</SYS>>
-
+    prompt = f"""
     You are an offensive sentence classifier. 
     Classify the following sentence into one of the following categories: 
-    'no offensive content', 'sexism', 'racism', or 'homophobia'. 
+    'no offensive content', 'sexism', 'racism', or 'homophobia'.
 
     Respond with just one of these categories.
 
     Sentence: {text}
-    Category:
-    [/INST]"""
+    Category:"""
 
     output = llm(prompt)
     return output
