@@ -17,7 +17,6 @@ load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 
 device = 0 if torch.cuda.is_available() else -1
-gpu = 20 if device == 0 else 0
 
 # Initialize OpenAI client
 client = OpenAI(api_key=api_key, base_url="https://api.gpt4-all.xyz/v1")
@@ -192,18 +191,20 @@ def is_offensive_gpt(text):
         ],
         temperature=0
     )
-    return response.choices[0].message.content.strip()
+    return clean_text(response.choices[0].message.content.strip())
 
 def is_offensive_llm(text):
     """
-    Classifica il testo in: 'no offensive content', 'sexism', 'racism', o 'homophobia'
-    usando un modello LLaMA locale.
+    Classifies the text as: 'no offensive content', 'sexism', 'racism', or 'homophobia'
+    using a local LLaMA model.
     """
 
     # Llama definition
+    gpu = 20 if device == 0 else 0
     llm = AutoModelForCausalLM.from_pretrained("TheBloke/Mistral-7B-v0.1-GGUF", model_file="mistral-7b-v0.1.Q4_K_M.gguf", model_type="mistral", gpu_layers=gpu)
+    translation = translate_to_english(text)
 
-    # Prompt"
+    # Prompt
     prompt = f"""
     You are an offensive sentence classifier. 
     Classify the following sentence into one of the following categories: 
@@ -211,10 +212,8 @@ def is_offensive_llm(text):
 
     Respond with just one of these categories.
 
-    Sentence: {text}
+    Sentence: {translation}
     Category:"""
 
-    output = llm(prompt)
-    return output
-
-print(is_offensive_llm("All women are sluts"))
+    output = llm(prompt, max_new_tokens=4, temperature=0)
+    return clean_text(output)
