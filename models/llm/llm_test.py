@@ -11,7 +11,7 @@ from ctransformers import AutoModelForCausalLM
 import torch
 
 # Use GPU if available
-gpu = 20 if not torch.cuda.is_available() else 0
+gpu = 100 if torch.cuda.is_available() else 0
 
 # Load the language model
 llm = AutoModelForCausalLM.from_pretrained(
@@ -36,7 +36,7 @@ inv_class_map = {v: k for k, v in class_map.items()}
 valid_labels = set(inv_class_map.keys())
 
 # Sample 5 examples per class
-sampled_df = df.groupby("category").apply(lambda x: x.sample(5, random_state=42)).reset_index(drop=True)
+sampled_df = df.groupby("category").apply(lambda x: x.sample(20, random_state=42)).reset_index(drop=True)
 
 def clean_output(output):
     """
@@ -124,9 +124,9 @@ plt.figure(figsize=(8, 6))
 sns.heatmap(conf_matrix_np, annot=True, fmt="d", cmap="Blues", xticklabels=list(class_map.values()), yticklabels=list(class_map.values()))
 plt.xlabel("Predicted Label")
 plt.ylabel("True Label")
-plt.title("Confusion Matrix - GPT Classification")
+plt.title("Confusion Matrix - Mistral Classification")
 plt.tight_layout()
-plt.savefig("models/gpt/result/confusion_matrix.png")
+plt.savefig("models/llm/result/confusion_matrix.png")
 plt.close()
 
-print("Confusion matrix image saved to models/gpt/result/confusion_matrix.png")
+print("Confusion matrix image saved to models/llm/result/confusion_matrix.png")
