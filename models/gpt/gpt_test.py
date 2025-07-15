@@ -31,8 +31,8 @@ class_map = {
 # Reverse mapping from class names to numbers
 inv_class_map = {v: k for k, v in class_map.items()}
 
-# Take 5 random examples from each category
-sampled_df = df.groupby("category").apply(lambda x: x.sample(5, random_state=42)).reset_index(drop=True)
+# Take 20 random examples from each category
+sampled_df = df.groupby("category").apply(lambda x: x.sample(20, random_state=42)).reset_index(drop=True)
 
 def is_offensive_gpt(text):
     """
@@ -52,11 +52,12 @@ def is_offensive_gpt(text):
             ],
             temperature=0
         )
-        time.sleep(5)
         return response.choices[0].message.content.strip().lower()
     except Exception as e:
         print(f"Error during API call: {e}")
         return "error"
+    finally:
+        time.sleep(5)
 
 # Classify each sentence in batches
 texts = sampled_df["text"].tolist()
