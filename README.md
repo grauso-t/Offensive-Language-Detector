@@ -1,5 +1,5 @@
 # Offensive-Language-Detector-Threads
-Progetto per l'esame di Fondametni di Data Science e Machine Learning. È stato sviluppato un modello per la classificazione automatica del linguaggio offensivo su Threads e Tiktok.
+Progetto per l'esame di Fondamenti di Data Science e Machine Learning. È stato sviluppato un modello per la classificazione automatica del linguaggio offensivo su Threads e Tiktok.
 
 La documentazione completa in formato PDF, contenente informazioni dettagliate sui dataset utilizzati nel progetto, è disponibile su GitHub al seguente link (https://github.com/grauso-t/Offensive-Language-Detector/blob/main//doc/Documentazione.pdf).
 
