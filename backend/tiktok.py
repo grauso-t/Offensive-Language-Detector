@@ -1,7 +1,6 @@
 import yt_dlp
 import os
 import audio_utils
-import datetime
 
 def is_tiktok_url(url):
     """
