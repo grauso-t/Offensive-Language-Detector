@@ -11,46 +11,19 @@ def undersample_to_minority(df, label_col='category'):
     return df_undersampled
 
 def clean_text(text):
-    """
-    Funzione per pulire il testo rimuovendo caratteri inutili
-    come virgolette multiple, ma senza eliminare parole offensive.
-    """
-    # HTML entities
     text = html.unescape(text)
-   
-    # Rimuovi utenti menzionati
     text = re.sub(r'(@\w+|\[USER\])', '', text)
-   
-    # Rimuovi hashtag
+    text = re.sub(r'\[URL\]', '', text)
     text = re.sub(r'#\w+', '', text)
-   
-    # Rimuovi URL
     text = re.sub(r'http\S+|www\.\S+', '', text)
-   
-    # Rimuovi caratteri non ASCII
     text = re.sub(r'[^\w\s,.!?\'"]+', '', text)
-   
-    # Rimuovi ripetizioni di lettere (es. cooool -> cool)
     text = re.sub(r'(.)\1{2,}', r'\1\1', text)
-   
-    # Rimuovi spazi multipli
     text = re.sub(r'\s+', ' ', text)
-   
-    # Rimuovi spazi iniziali/finali
     text = text.strip()
-    
-    # Converti in minuscolo
     text = text.lower()
-   
-    # Remove non-alphanumeric characters (except spaces)
     text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-   
-    # Remove multiple spaces
     text = re.sub(r'\s+', ' ', text)
-    
-    # Remove leading and trailing spaces
     text = text.strip()
-    
     return text
 
 # Load datasets

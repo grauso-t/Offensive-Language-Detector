@@ -100,5 +100,5 @@ for i, category in enumerate(model.classes_):
     plt.xlabel("Coefficient Weight")
     plt.ylabel("Word")
     plt.tight_layout()
-    plt.savefig(os.path.join(results_dir, f'top_words_category_{category}.svg'), format='svg')  # <-- salva in SVG
+    plt.savefig(os.path.join(results_dir, f'top_words_category_{category}.png'), format='png')
     plt.close()

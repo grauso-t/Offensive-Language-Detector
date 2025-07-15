@@ -44,21 +44,20 @@ bert_model.to(device)
 bert_model.eval()
 
 def clean_text(text):
-    """
-    Clean text by removing mentions, hashtags, URLs, special characters,
-    repeated characters, and converting to lowercase.
-    """
-    text = html.unescape(text)  # Decode HTML entities
-    text = re.sub(r'(@\w+|\[USER\])', '', text)  # Remove mentions
-    text = re.sub(r'#\w+', '', text)  # Remove hashtags
-    text = re.sub(r'http\S+|www\.\S+', '', text)  # Remove URLs
-    text = re.sub(r'[^\w\s,.!?\'"]+', '', text)  # Remove non-ASCII symbols
-    text = re.sub(r'(.)\1{2,}', r'\1\1', text)  # Normalize repeated characters
-    text = re.sub(r'\s+', ' ', text).strip().lower()  # Normalize spaces, lowercase
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)  # Remove remaining special characters
-    text = re.sub(r'\s+', ' ', text).strip()  # Final cleanup
+    text = html.unescape(text)
+    text = re.sub(r'(@\w+|\[USER\])', '', text)
+    text = re.sub(r'\[URL\]', '', text)
+    text = re.sub(r'#\w+', '', text)
+    text = re.sub(r'http\S+|www\.\S+', '', text)
+    text = re.sub(r'[^\w\s,.!?\'"]+', '', text)
+    text = re.sub(r'(.)\1{2,}', r'\1\1', text)
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
+    text = text.lower()
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
     return text
-
 
 def translate_to_english(text):
     """
